@@ -23,7 +23,7 @@ TZ_SV = pytz.timezone('America/El_Salvador')
 # -------------------------------
 st.set_page_config(
     page_title="CSDC Dashboard",
-    page_icon="⚡",
+    page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -152,15 +152,14 @@ if not df.empty:
     df["timestamp"] = df["timestamp"] - pd.Timedelta(hours=6)
 
 # -------------------------------
-# 4. SIDEBAR
+# 4. SIDEBAR (Código Modificado)
 # -------------------------------
 with st.sidebar:
-    st.title("⚡ CSDC Analytics")
+    st.title("CSDC Analytics")
     st.markdown("Panel de Control")
     st.markdown("---")
     
     if not df.empty:
-        # Ya tiene la hora corregida aquí
         min_date = df["timestamp"].min().date()
         max_date = df["timestamp"].max().date()
         
@@ -174,8 +173,47 @@ with st.sidebar:
         date_range = []
 
     st.markdown("###")
-    if st.button("🔄 Actualizar", type="secondary", use_container_width=True):
+    
+    # --- INICIO DEL TRUCO DE COLOR ---
+    # Esto pinta el botón de un color específico (ej. Verde #10b981)
+    st.markdown("""
+        <style>
+        /* Apunta a los botones dentro del sidebar */
+        [data-testid="stSidebar"] .stButton > button {
+            background-color: #0f172a; /* Azul Oscuro (puedes cambiarlo) */
+            color: white;              /* Color del texto */
+            border: 1px solid #1e293b; /* Borde sutil */
+        }
+        
+        </style>
+    """, unsafe_allow_html=True)
+    # --- FIN DEL TRUCO ---
+
+    if st.button("Actualizar", type="secondary", use_container_width=True):
         st.rerun()
+
+# ---------------------------------------------------------
+    # BOTÓN TELEGRAM: Minimalista (Solo Color Oficial)
+    # ---------------------------------------------------------
+    telegram_url = "https://web.telegram.org/k/#@CSDC_ASSISTANT_BOT"
+
+    st.markdown(f"""
+    <a href="{telegram_url}" target="_blank" style="text-decoration: none;">
+        <div style="
+            background-color: #24A1DE; 
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: opacity 0.2s;
+        " onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+            Abrir chatbot en Telegram
+        </div>
+    </a>
+    """, unsafe_allow_html=True)
 
 # -------------------------------
 # 5. LÓGICA
