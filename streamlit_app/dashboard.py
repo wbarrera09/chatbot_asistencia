@@ -1,8 +1,10 @@
 import sys
 import os
 import time
+from datetime import datetime # ✅ Importado para manejo de fechas
+import pytz # ✅ Importado para manejo de zonas horarias
 
-# --- CONFIGURACIÓN DE RUTA ---
+# CONFIGURACIÓN DE RUTA
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if ROOT_DIR not in sys.path:
     sys.path.append(ROOT_DIR)
@@ -12,6 +14,9 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 from bot.db import get_connection
+
+# Definimos la Zona Horaria de El Salvador
+TZ_SV = pytz.timezone('America/El_Salvador')
 
 # -------------------------------
 # 1. CONFIGURACIÓN DE PÁGINA
@@ -118,9 +123,6 @@ st.markdown("""
         color: #172554; /* Azul Marino */
         font-weight: 800;
     }
-            
-
-            
 </style>
 """, unsafe_allow_html=True)
 
@@ -143,6 +145,12 @@ def load_data():
 
 df = load_data()
 
+
+if not df.empty:
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    # Restamos 6 horas para ajustar la hora del servidor (UTC) a El Salvador
+    df["timestamp"] = df["timestamp"] - pd.Timedelta(hours=6)
+
 # -------------------------------
 # 4. SIDEBAR
 # -------------------------------
@@ -152,7 +160,7 @@ with st.sidebar:
     st.markdown("---")
     
     if not df.empty:
-        df["timestamp"] = pd.to_datetime(df["timestamp"])
+        # Ya tiene la hora corregida aquí
         min_date = df["timestamp"].min().date()
         max_date = df["timestamp"].max().date()
         
@@ -192,6 +200,9 @@ df_filtered["day_name"] = df_filtered["timestamp"].dt.dayofweek.map(dias_map)
 # 6. DASHBOARD VISUAL
 # -------------------------------
 
+# 
+hora_actual_sv = datetime.now(TZ_SV).strftime('%d/%m/%Y %H:%M')
+
 # Header
 c1, c2 = st.columns([4, 1])
 with c1:
@@ -201,7 +212,7 @@ with c2:
     st.markdown(
         f"""
         <div style='text-align: right; padding-top: 20px; color: #000000; font-size:14px;'>
-            Última actualización:<br><b>{time.strftime('%d/%m/%Y %H:%M')}</b>
+            Última actualización:<br><b>{hora_actual_sv}</b>
         </div>
         """,
         unsafe_allow_html=True
@@ -212,12 +223,16 @@ st.markdown("---")
 
 # --- A. KPIs (Blue Style) ---
 total = len(df_filtered)
-hoy = pd.Timestamp.today().date()
+
+# 
+hoy = datetime.now(TZ_SV).date()
 sol_hoy = len(df[df["timestamp"].dt.date == hoy])
 
 if not df_filtered.empty:
     top_tramite = df_filtered["tipo_solicitud"].mode()[0]
-    hora_pico = f"{df_filtered['hour'].mode()[0]}:00"
+    # Formateo bonito de hora pico
+    hora_pico_val = df_filtered['hour'].mode()[0]
+    hora_pico = f"{hora_pico_val:02d}:00"
 else:
     top_tramite = "--"
     hora_pico = "--"
